@@ -117,12 +117,12 @@ static int check_rdismb()
 	return (read_fsr() & FSR_RDISMB) ? 1 : 0;
 }
 
-static void cmd_device(uint8_t bus, uint8_t port)
+static void cmd_device(uint8_t bus, uint8_t devnum)
 {
 	if (spi_started)
 		spi_end();
 
-	if (spi_begin(bus, port) != 0) {
+	if (spi_begin(bus, devnum) != 0) {
 		fprintf(stderr, "problem accessing device\n");
 		exit(EXIT_FAILURE);
 	}
@@ -362,7 +362,7 @@ static void cmd_show_usage(const char *name)
 {
 	printf("Usage: %s [options]\n", name);
 	printf("Options:\n");
-	printf("  -d, --device <bus>-<port>\n");
+	printf("  -d, --device <bus>-<devnum>\n");
 	printf("        Choose which USB device to use\n");
 	printf("  -r, --read-flash <filename>\n");
 	printf("        Reads flash memory and write to filename\n");
@@ -384,7 +384,7 @@ static void cmd_show_usage(const char *name)
 
 int main(int argc, char *argv[])
 {
-	uint8_t bus = 0, port = 0;
+	uint8_t bus = 0, devnum = 0;
 
 	struct option long_options[] = {
 		{"help",	no_argument,		0, 'h'},
@@ -410,12 +410,12 @@ int main(int argc, char *argv[])
 
 		switch (c) {
 		case 'd': // device
-			if (sscanf(optarg, "%hhu-%hhu", &bus, &port) != 2) {
+			if (sscanf(optarg, "%hhu-%hhu", &bus, &devnum) != 2) {
 				fprintf(stderr, "invalid USB device\n");
 				return EXIT_FAILURE;
 			}
 
-			cmd_device(bus, port);
+			cmd_device(bus, devnum);
 			break;
 		case 'r': // read flash
 			if (!spi_started)

@@ -4,7 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <ftdi.h>
-#include <libusb.h>
+#include <usb.h>
 #include "spi.h"
 
 #define LOW	0
@@ -62,7 +62,7 @@ static void prog_end()
 	digitalWrite(PIN_RESET, HIGH);
 }
 
-int spi_begin(uint8_t bus, uint8_t port)
+int spi_begin(uint8_t bus, uint8_t devnum)
 {
 	int ret;
 
@@ -76,7 +76,7 @@ int spi_begin(uint8_t bus, uint8_t port)
 		struct ftdi_device_list *list = NULL;
 		struct ftdi_device_list *p;
 
-		ret = ftdi_usb_find_all(ftdi, &list, 0, 0);
+		ret = ftdi_usb_find_all(ftdi, &list, 0x0403, 0x6001);
 		if (ret < 0) {
 			fprintf(stderr, "unable to list devices: %d (%s)\n",
 					ret, ftdi_get_error_string(ftdi));
@@ -86,8 +86,8 @@ int spi_begin(uint8_t bus, uint8_t port)
 
 		p = list;
 		while (p) {
-			if (bus == libusb_get_bus_number(p->dev) &&
-				port == libusb_get_port_number(p->dev)) {
+			if (bus == p->dev->bus->location &&
+				devnum == p->dev->devnum) {
 				ret = ftdi_usb_open_dev(ftdi, p->dev);
 				break;
 			}
@@ -97,8 +97,8 @@ int spi_begin(uint8_t bus, uint8_t port)
 		ftdi_list_free(&list);
 
 		if (!p) {
-			fprintf(stderr, "dev on bus %i and port %i not found\n",
-								bus, port);
+			fprintf(stderr, "dev on bus %i and dev %i not found\n",
+								bus, devnum);
 			ftdi_free(ftdi);
 			return -3;
 		}
