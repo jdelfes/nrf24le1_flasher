@@ -64,7 +64,8 @@ we have serial already.
 Dependencies
 ------------
 
-The only dependency is libftdi1 and libusb-1.0.
+The only dependency is libftdi and libusb. If you are using debian distro or
+some alternative like ubuntu, don't forget to install -dev packages.
 
 
 Usage
@@ -82,7 +83,12 @@ It will list every FTDI device connected at your PC, something like:
 Bus 004 Device 048: ID 0403:6001 Future Technology Devices International, Ltd FT232 USB-Serial (UART) IC 
 ```
 
-If you see more that one entry, please go to "Multiple FTDI Devices" section.
+If you see more that one entry, you can append bus and device number on command.
+In above example, we can select bus (4) and device (48) with:
+
+```
+# nrf24le1_flasher -d 4-48 --read-ip ip_bkp.img
+```
 
 You need permission to access that USB device. You can become root, use sudo or
 change permission of /dev/bus/usb/$BUS/$DEV specific.
@@ -107,30 +113,6 @@ that you saved before.
 
 If you want to know other options, use the "--help" parameter.
 
-
-Multiple FTDI Devices
----------------------
-
-If you have more than one FTDI plugged, you need to choose which one to be used.
-Type this command on terminal:
-
-```
-$ lsusb -t
-```
-
-It will list devices like:
-
-```
-/:  Bus 04.Port 1: Dev 1, Class=root_hub, Driver=uhci_hcd/2p, 12M
-    |__ Port 2: Dev 48, If 0, Class=Vendor Specific Class, Driver=ftdi_sio, 12M
-```
-
-Now we know the bus (4) and the port (2) of our FTDI device, so we can pass it
-to nrf24le1_flasher:
-
-```
-# nrf24le1_flasher -d 4-2 --read-ip ip_bkp.img
-```
 
 Another programmers/flashers
 ----------------------------
