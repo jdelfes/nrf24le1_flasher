@@ -19,8 +19,8 @@
 #define PIN_PROG	(1 << 6)	/* DCD */	// nRF24LE1 Program
 #define PINS_OUT	(PIN_PROG|PIN_RESET|PIN_FCSN|PIN_FSCK|PIN_FMOSI)
 
-#define BYTES_PER_BIT 3
-#define FTDI_READ_FIFO_SIZE 384
+#define BYTES_PER_BIT 4
+#define FTDI_READ_FIFO_SIZE 96
 //#define delay_ns(t)
 #define delay_us(t) usleep(t)
 #define delay_ms(t) usleep(t * 1000)
@@ -120,7 +120,7 @@ int spi_begin(uint8_t bus, uint8_t port)
 		return -5;
 	}
 
-	ret = ftdi_set_baudrate(ftdi, 57600);
+	ret = ftdi_set_baudrate(ftdi, 9600);
 	if (ret != 0) {
 		fprintf(stderr, "unable to set baudrate: %d (%s)\n", ret,
 						ftdi_get_error_string(ftdi));
@@ -169,6 +169,10 @@ static int spi_buf_w(const uint8_t *b, size_t s)
 			pin_state |= PIN_FSCK;
 			buf[j++] = pin_state;
 
+#if BYTES_PER_BIT == 4
+			buf[j++] = pin_state;
+#endif
+
 			pin_state &= ~PIN_FSCK;
 			buf[j++] = pin_state;
 		}
@@ -197,7 +201,7 @@ static int spi_buf_r(uint8_t *b, size_t s)
 
 		// most significant bit first
 		for (bit = (1 << 7); bit > 0; bit >>= 1) {
-			j += (BYTES_PER_BIT + 1) / 2;
+			j += BYTES_PER_BIT - 1;
 			if (buf[j++] & PIN_FMISO)
 				v |= bit;
 		}
