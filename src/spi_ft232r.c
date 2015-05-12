@@ -233,6 +233,8 @@ int spi_transfer(uint8_t *bytes, size_t size)
 			digitalWrite(PIN_FCSN, HIGH);
 			return pos;
 		}
+
+		ftdi_usb_purge_buffers(ftdi);
 	}
 
 	digitalWrite(PIN_FCSN, HIGH);
