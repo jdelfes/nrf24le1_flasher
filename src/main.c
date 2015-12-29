@@ -152,7 +152,7 @@ static void cmd_read_flash(const char *filename)
 		exit(EXIT_FAILURE);
 	}
 
-	f = fopen(filename, "w");
+	f = fopen(filename, "wb");
 	if (!f) {
 		fprintf(stderr, "can't open %s to write\n", filename);
 		exit(EXIT_FAILURE);
@@ -298,7 +298,7 @@ static void cmd_read_ip(const char *filename)
 		exit(EXIT_FAILURE);
 	}
 
-	f = fopen(filename, "w");
+	f = fopen(filename, "wb");
 	if (!f) {
 		fprintf(stderr, "can't open %s to write\n", filename);
 		exit(EXIT_FAILURE);
@@ -322,7 +322,7 @@ static void cmd_write_ip(const char *filename)
 	buf[1] = 0x00; // address
 	buf[2] = 0x00;
 
-	f = fopen(filename, "r");
+	f = fopen(filename, "rb");
 	if (!f) {
 		fprintf(stderr, "can't open %s to read\n", filename);
 		exit(EXIT_FAILURE);
