@@ -7,6 +7,8 @@
 #include <libusb.h>
 #include "spi.h"
 
+#include "nrf_flash.h"
+
 #define LOW	0
 #define HIGH	1
 
@@ -235,3 +237,54 @@ int spi_transfer(uint8_t *bytes, size_t size)
 	return size;
 }
 
+int spi_transfer_sg(uint8_t op, uint16_t address, uint8_t *bytes, size_t size)
+{
+	int pos;
+	int sz = FTDI_READ_FIFO_SIZE / 8 / BYTES_PER_BIT;
+	uint8_t cmd[] = {op, address >> 8, address & 0xff};
+	int cmd_size = sizeof(cmd);
+	
+	if (op != READ && op != PROGRAM) {
+		fprintf(stderr, "internal error: not supported op is pass to %s\n", __FUNCTION__);
+		return 0;
+	}
+	
+	digitalWrite(PIN_FCSN, LOW);
+	for (pos = 0; pos < cmd_size; pos += sz) {
+		int cksize = ((cmd_size - pos) < sz) ? (cmd_size - pos) : sz;
+
+		if (spi_buf_w(cmd + pos, cksize) != cksize) {
+			fprintf(stderr, "error writing spi\n");
+			digitalWrite(PIN_FCSN, HIGH);
+			return pos;
+		}
+
+		if (spi_buf_r(cmd + pos, cksize) != cksize) {
+			fprintf(stderr, "error reading spi\n");
+			digitalWrite(PIN_FCSN, HIGH);
+			return pos;
+		}
+	}
+
+	uint8_t tmp[size];
+	uint8_t *rbuffer = (op == PROGRAM) ? tmp : bytes;
+	
+	for (pos = 0; pos < size; pos += sz) {
+		int cksize = ((size - pos) < sz) ? (size - pos) : sz;
+
+		if (spi_buf_w(bytes + pos, cksize) != cksize) {
+			fprintf(stderr, "error writing spi\n");
+			digitalWrite(PIN_FCSN, HIGH);
+			return pos;
+		}
+
+		if (spi_buf_r(rbuffer + pos, cksize) != cksize) {
+			fprintf(stderr, "error reading spi\n");
+			digitalWrite(PIN_FCSN, HIGH);
+			return pos;
+		}
+	}
+
+	digitalWrite(PIN_FCSN, HIGH);
+	return size;
+}

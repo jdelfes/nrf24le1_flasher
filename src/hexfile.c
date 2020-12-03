@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include "hexfile.h"
 
@@ -17,13 +18,14 @@ static uint8_t checksum(const char *line, int size)
 	return 0x100 - res;
 }
 
-int hexfile_getline(FILE *fd, uint16_t *address, uint8_t *dest, size_t n)
+int hexfile_getline(FILE *fd, uint16_t *address, uint8_t *dest, size_t n, bool address_as_offset, uint16_t address_offset)
 {
 	char line[522];
 	uint8_t count = 0, type = 0, cksum = 0;
 	int r, i;
 
-	fgets(line, sizeof(line), fd);
+	if (fgets(line, sizeof(line), fd) == NULL)
+		return 0;
 
 	if (line[0] != ':') {
 		fprintf(stderr, "line can't be parsed: %s\n", line);
@@ -35,10 +37,11 @@ int hexfile_getline(FILE *fd, uint16_t *address, uint8_t *dest, size_t n)
 		fprintf(stderr, "line parse error: %s\n", line);
 		return -2;
 	}
-
-	if (count > n) {
-		fprintf(stderr, "internal buffer too small to handle: %s\n",
-									line);
+	*address += address_offset;
+	uint16_t offset = address_as_offset ? *address : 0;
+	if (offset + count > n) {
+		fprintf(stderr, "internal buffer too small to handle (%d > %zu): %s\n",
+									offset + count, n, line);
 		return -3;
 	}
 
@@ -65,7 +68,7 @@ int hexfile_getline(FILE *fd, uint16_t *address, uint8_t *dest, size_t n)
 				return -6;
 			}
 
-			dest[i] = b;
+			dest[offset + i] = b;
 		}
 		return count;
 	}
@@ -77,4 +80,3 @@ int hexfile_getline(FILE *fd, uint16_t *address, uint8_t *dest, size_t n)
 
 	return 0;
 }
-
